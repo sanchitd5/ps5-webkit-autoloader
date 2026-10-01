@@ -1,0 +1,8 @@
+{
+  "id": "webkit-autoloader",
+  "name": "WebKit Autoloader",
+  "icon": "icon.png",
+  "description": "Load WebKit exploit and payloads automatically",
+  "target": "http://192.168.1.3:8080/app/v0/",
+  "type": "link"
+}

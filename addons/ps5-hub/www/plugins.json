@@ -1,0 +1,12 @@
+{
+  "plugins": [
+    {
+      "id": "payload-manager",
+      "name": "Payload Manager",
+      "icon": "icon.png",
+      "description": "Upload and send payloads",
+      "target": "http://192.168.1.4:8000",
+      "type": "link"
+    }
+  ]
+}
