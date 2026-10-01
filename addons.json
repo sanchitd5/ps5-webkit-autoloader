@@ -1,4 +1,7 @@
 {
+  "name": "PS5 WebKit Autoloader Repository",
+  "url": "https://github.com/sanchitd5/ps5-webkit-autoloader",
+  "maintainer": "sanchitd5",
   "addons": {
     "ps5_webkit_server": {
       "name": "PS5 WebKit Server",
