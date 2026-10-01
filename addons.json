@@ -1,0 +1,10 @@
+{
+  "addons": {
+    "ps5_webkit_server": {
+      "name": "PS5 WebKit Server",
+      "description": "Serve PS5 WebKit Autoloader exploit files locally",
+      "url": "https://github.com/sanchitd5/ps5-webkit-autoloader/tree/main/addons/ps5-webkit-server",
+      "maintainer": "sanchitd5"
+    }
+  }
+}
