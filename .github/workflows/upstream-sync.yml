@@ -1,0 +1,103 @@
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/itsPLK/ps5-webkit-autoloader.git
+          git fetch upstream main
+
+      - name: Check for new upstream commits
+        id: diff
+        run: |
+          if git merge-base --is-ancestor upstream/main HEAD; then
+            echo "has_updates=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_updates=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Attempt merge
+        if: steps.diff.outputs.has_updates == 'true'
+        id: merge
+        run: |
+          if git merge upstream/main --no-edit -m "chore: sync upstream itsPLK/ps5-webkit-autoloader"; then
+            echo "clean=true" >> "$GITHUB_OUTPUT"
+          else
+            git merge --abort
+            echo "clean=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up PS5 Payload SDK (needed by submodule patch scripts)
+        if: steps.merge.outputs.clean == 'true'
+        run: |
+          git submodule update --init --recursive \
+            third_party/relapse third_party/slopkit third_party/umtx2 \
+            third_party/ps5-elfldr third_party/ps5-unified-autoloader
+
+      - name: Rebuild frontend/autoloader from upstream sources
+        if: steps.merge.outputs.clean == 'true'
+        run: |
+          bash tools/apply_relapse_patch.sh
+          bash tools/apply_slopkit_patch.sh
+          bash tools/apply_umtx2_patch.sh
+          bash tools/download_deps.sh
+
+      - name: Re-vendor frontend into the HA add-on
+        if: steps.merge.outputs.clean == 'true'
+        run: |
+          rm -rf addons/ps5-webkit-server/frontend
+          mkdir -p addons/ps5-webkit-server/frontend
+          cp -R frontend/autoloader addons/ps5-webkit-server/frontend/
+          rm -f addons/ps5-webkit-server/frontend/autoloader/placeholder.txt
+          find addons/ps5-webkit-server/frontend -maxdepth 2 -name .git -type d -exec rm -rf {} +
+
+      - name: Commit re-vendored frontend
+        if: steps.merge.outputs.clean == 'true'
+        run: |
+          git add addons/ps5-webkit-server/frontend
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: re-vendor HA add-on frontend from synced upstream"
+          fi
+
+      - name: Push clean sync
+        if: steps.merge.outputs.clean == 'true'
+        run: git push origin HEAD:main
+
+      - name: Push conflict branch and open PR
+        if: steps.merge.outputs.clean == 'false'
+        run: |
+          BRANCH="upstream-sync-$(date +%Y%m%d)"
+          git fetch upstream main
+          git checkout -b "$BRANCH"
+          git merge upstream/main --no-edit -m "chore: sync upstream itsPLK/ps5-webkit-autoloader (conflicts)" || true
+          git push origin "$BRANCH" --force-with-lease
+          gh pr create \
+            --title "Upstream sync has conflicts ($(date +%Y-%m-%d))" \
+            --body "Automated daily sync from itsPLK/ps5-webkit-autoloader hit a merge conflict against fork-only changes (addons/, vendored frontend, HA config). Resolve manually: the conflicting files are marked in this branch." \
+            --base main \
+            --head "$BRANCH" || echo "PR may already exist for this conflict state"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
