@@ -74,10 +74,17 @@ jobs:
           rm -f addons/ps5-webkit-server/frontend/autoloader/placeholder.txt
           find addons/ps5-webkit-server/frontend -maxdepth 2 -name .git -type d -exec rm -rf {} +
 
+      - name: Stamp add-on version with this commit's short SHA
+        if: steps.merge.outputs.clean == 'true'
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          jq --arg v "$SHA" '.version = $v' addons/ps5-webkit-server/config.json > /tmp/config.json.tmp
+          mv /tmp/config.json.tmp addons/ps5-webkit-server/config.json
+
       - name: Commit re-vendored frontend
         if: steps.merge.outputs.clean == 'true'
         run: |
-          git add addons/ps5-webkit-server/frontend
+          git add addons/ps5-webkit-server/frontend addons/ps5-webkit-server/config.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: re-vendor HA add-on frontend from synced upstream"
           fi
