@@ -63,3 +63,9 @@ __pycache__/
 
 # Reference materials
 .for_reference/
+
+# HA add-on vendors the built frontend/autoloader/ (including the binaries and
+# generated exploit copies above) so the Docker build context is self
+# contained; un-ignore it here.
+!addons/ps5-webkit-server/
+!addons/ps5-webkit-server/**
