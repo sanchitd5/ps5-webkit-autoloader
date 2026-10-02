@@ -5,7 +5,7 @@ RUN apk add --no-cache python3 py3-pip
 
 WORKDIR /app
 
-COPY run.sh /app/
+COPY run.sh server.py /app/
 RUN chmod +x /app/run.sh
 
 # Copy the exploit frontend files
