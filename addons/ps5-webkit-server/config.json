@@ -1,7 +1,7 @@
 {
   "name": "PS5 WebKit Server",
   "description": "Serve PS5 WebKit Autoloader exploit files locally via DNS redirect",
-  "version": "1.0.0",
+  "version": "4bf4849",
   "slug": "ps5-webkit-server",
   "maintainer": "sanchitd5 <sanchitd4@gmail.com>",
   "url": "https://github.com/sanchitd5/ps5-webkit-autoloader",
@@ -12,7 +12,11 @@
   "ports_description": {
     "8080/tcp": "HTTP server for exploit delivery"
   },
-  "arch": ["armhf", "armv7", "aarch64"],
+  "arch": [
+    "armhf",
+    "armv7",
+    "aarch64"
+  ],
   "startup": "application",
   "boot": "auto",
   "network": true,
